@@ -165,6 +165,9 @@
     <button data-target="log-view" class="nav-btn">+ Log</button>
   </nav>
 
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
