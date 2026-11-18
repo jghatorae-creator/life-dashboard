@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+  <!-- SCREEN 1: SPOTIFY-STYLE HOME GRID -->
+  <section id="home-view" class="view active">
+    <header class="top-bar">
+      <h1>Dashboard</h1>
+      <input type="text" id="search-bar" placeholder="Search health, meals, schedule...">
+    </header>
+
+    <div class="tile-grid" id="tile-grid">
+      <div class="tile" data-target="chart-view" style="background-color: #1E3264;">
+        <span>Correlations</span>
+      </div>
+      <div class="tile" data-target="schedule-view" style="background-color: #8D67AB;">
+        <span>Schedule & Deadlines</span>
+      </div>
+      <div class="tile" data-target="schedule-view" style="background-color: #148A08;">
+        <span>Meal Plan</span>
+      </div>
+      <div class="tile" data-target="log-view" style="background-color: #E13300;">
+        <span>Period & Migraines</span>
+      </div>
+      <div class="tile" data-target="log-view" style="background-color: #D84000;">
+        <span>Calorie Count</span>
+      </div>
+      <div class="tile" data-target="chart-view" style="background-color: #509BF5;">
+        <span>Hormones & Focus</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: CORRELATIONS & INDIVIDUAL METRIC CHARTS -->
+  <section id="chart-view" class="view">
+    <h2>Health & Hormone Analytics</h2>
+    <p class="subtitle">Switch between Combined vs. Individual metrics, or Bar vs. Pie</p>
+
+    <div class="control-bar">
+      <select id="metric-filter">
+        <option value="all">All Metrics Combined (Multi-Color)</option>
+        <option value="productivity">Productivity Only</option>
+        <option value="stress">Stress Only</option>
+        <option value="migraine">Migraine Only</option>
+        <option value="period">Period Flow Only</option>
+        <option value="hormone">Hormone / Ovulation (LH) Only</option>
+      </select>
+
+      <div class="type-switch">
+        <button type="button" id="btn-bar" class="mode-btn active">Bar Chart</button>
+        <button type="button" id="btn-pie" class="mode-btn">Pie Chart</button>
+      </div>
+    </div>
+
+    <div id="pie-date-row" class="pie-date-row" style="display: none;">
+      <label>Select Day for Pie Breakdown:
+        <select id="pie-date-select"></select>
+      </label>
+    </div>
+
+    <div id="legend-toggles" class="toggle-row"></div>
+
+    <div class="chart-container">
+      <canvas id="correlationChart"></canvas>
+    </div>
+
+    <h3 class="section-label">Logged Reasons & Notes</h3>
+    <ul id="reasons-list" class="reasons-list"></ul>
+  </section>
+
+  <!-- SCREEN 3: GOOGLE CALENDAR & QUICK SCHEDULE -->
+  <section id="schedule-view" class="view">
+    <h2>My Schedule & Google Calendar</h2>
+    <p class="subtitle">View your Google Calendar and manage quick schedule blocks.</p>
+
+    <div id="gcal-mode-switch" class="type-switch gcal-mode-switch" style="margin-bottom: 10px;">
+      <button type="button" class="mode-btn active" data-mode="MONTH" onclick="setGcalMode('MONTH')">Month (Tall)</button>
+      <button type="button" class="mode-btn" data-mode="WEEK" onclick="setGcalMode('WEEK')">Week View</button>
+      <button type="button" class="mode-btn" data-mode="AGENDA" onclick="setGcalMode('AGENDA')">Full List</button>
+    </div>
+
+    <div class="gcal-embed-wrapper">
+      <iframe
+        id="gcal-iframe"
+        src="https://calendar.google.com/calendar/embed?src=jghatorae%40gmail.com&amp;ctz=Europe%2FLondon&amp;mode=MONTH"
+        title="Google Calendar"
+        style="border: 0"
+        width="100%"
+        height="860"
+        frameborder="0"
+        scrolling="yes">
+      </iframe>
+    </div>
+
+    <div class="day-detail-box" style="margin-top: 16px;">
+      <h3>Quick Deadlines & Meal Plan Blocks</h3>
+      <ul id="schedule-list" style="margin-top: 12px;"></ul>
+      <form id="schedule-form" class="card-form">
+        <input type="date" id="sched-date" required>
+        <input type="time" id="sched-time" required>
+        <input type="text" id="sched-title" placeholder="e.g., Uni 9-11, Bio Lab, CW2 Due, Meal Plan..." required>
+        <select id="sched-category">
+          <option value="Uni">Uni / Lecture (Blue)</option>
+          <option value="Lab">Lab / Tutorial (Orange)</option>
+          <option value="Deadline">Deadline / Assessment (Pink)</option>
+          <option value="Meal Plan">Meal Plan / Routine (Green)</option>
+        </select>
+        <button type="submit">+ Add Block</button>
+      </form>
+    </div>
+
+    <div class="card-form" style="margin-top: 16px;">
+      <label>Google Calendar Embed URL:
+        <input type="url" id="gcal-embed-url" value="https://calendar.google.com/calendar/embed?src=jghatorae%40gmail.com&amp;ctz=Europe%2FLondon&amp;mode=MONTH" required>
+      </label>
+      <button type="button" id="save-embed-btn" class="secondary-btn" style="margin-top: 4px;">Update Calendar Link</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: DAILY QUICK LOG -->
+  <section id="log-view" class="view">
+    <h2>Log Today's Metrics</h2>
+    <form id="log-form" class="card-form">
+      <label>Date: <input type="date" id="log-date" required></label>
+      <label>Productivity (0–10): <input type="range" id="log-prod" min="0" max="10" value="5"></label>
+      <label>Stress (0–10): <input type="range" id="log-stress" min="0" max="10" value="5"></label>
+      <label>Migraine Severity (0–10): <input type="range" id="log-migraine" min="0" max="10" value="0"></label>
+      <label>Period Flow:
+        <select id="log-period">
+          <option value="0">None (0)</option>
+          <option value="3">Light (3)</option>
+          <option value="6">Medium (6)</option>
+          <option value="9">Heavy (9)</option>
+        </select>
+      </label>
+      <label>Hormone / Ovulation Test (LH):
+        <select id="log-hormone">
+          <option value="1">Low / Baseline (1)</option>
+          <option value="4">Rising Estrogen / Mid (4)</option>
+          <option value="7">High LH Surge (7)</option>
+          <option value="10">Peak Ovulation Positive (10)</option>
+        </select>
+      </label>
+      <label>Reasons / Triggers (e.g., poor sleep, exam deadline, luteal phase):
+        <input type="text" id="log-reason" placeholder="Why did you feel this way today?">
+      </label>
+      <label>Calories: <input type="number" id="log-calories" placeholder="e.g. 2000"></label>
+      <button type="submit">Save Daily Entry</button>
+    </form>
+    <button id="export-btn" class="secondary-btn">Export Data Backup (JSON)</button>
+  </section>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="bottom-nav">
+    <button data-target="home-view" class="nav-btn active">Home</button>
+    <button data-target="chart-view" class="nav-btn">Charts</button>
+    <button data-target="schedule-view" class="nav-btn">Schedule</button>
+    <button data-target="log-view" class="nav-btn">+ Log</button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
