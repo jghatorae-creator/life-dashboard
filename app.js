@@ -18,14 +18,22 @@ const metrics = [
   { key: 'hormone', label: 'Hormone (LH)', color: '#9B51E0', active: true }
 ];
 
-// --- 2. SCREEN SWITCHING ---
-function switchScreen(targetId) {
+// --- 2. SCREEN SWITCHING (WITH ANDROID BACK BUTTON SUPPORT) ---
+function switchScreen(targetId, addToHistory = true) {
   document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-  document.getElementById(targetId).classList.add('active');
+  const targetSection = document.getElementById(targetId);
+  if (!targetSection) return;
+  targetSection.classList.add('active');
+
   const activeNav = document.querySelector(`.nav-btn[data-target="${targetId}"]`);
   if (activeNav) activeNav.classList.add('active');
+
+  // Push screen state into browser history when moving away from Home
+  if (addToHistory && targetId !== 'home-view') {
+    history.pushState({ screen: targetId }, '', `#${targetId}`);
+  }
 
   if (targetId === 'chart-view') {
     populatePieDates();
@@ -37,10 +45,19 @@ function switchScreen(targetId) {
   }
 }
 
+// Intercept Android's physical/gesture Back button
+window.addEventListener('popstate', (event) => {
+  const previousScreen = (event.state && event.state.screen) ? event.state.screen : 'home-view';
+  switchScreen(previousScreen, false);
+});
+
+// Set initial history state on load
+history.replaceState({ screen: 'home-view' }, '', '#home-view');
+
 document.querySelectorAll('.tile, .nav-btn').forEach(el => {
   el.addEventListener('click', () => {
     const target = el.getAttribute('data-target');
-    if (target) switchScreen(target);
+    if (target) switchScreen(target, true);
   });
 });
 
